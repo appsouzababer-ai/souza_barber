@@ -278,6 +278,51 @@ if(data){
 alert('Seu login é: @'+data.instagram);
 }
 }
+<div id="home" class="screen center">
+
+    <button class="topbtn secondary" onclick="logout()">
+        Sair
+    </button>
+
+    <img class="logo" src="https://i.postimg.cc/VkxDCXD6/Souza-Barber.png">
+
+    <p>
+        Rua João Cordeiro, 27<br>
+        Santana do Acaraú - Ceará
+    </p>
+
+    <p>
+        Segunda à Sexta<br><br>
+        08:00 às 12:00<br>
+        14:00 às 19:00
+    </p>
+
+    <button onclick="show('servicos')">
+        Agendar Horário
+    </button>
+
+    <p>
+        <a
+            style="color:#ffc107"
+            href="https://instagram.com/souzabarber._"
+            target="_blank"
+        >
+            @souzabarber._
+        </a>
+    </p>
+
+    <p>
+        <a
+            style="color:#ffc107"
+            href="https://wa.me/5588999514333"
+            target="_blank"
+        >
+            WhatsApp
+        </a>
+    </p>
+
+</div>
+
 
 /* SERVIÇOS */
 async function loadServicos(){
@@ -351,22 +396,37 @@ show('servicos');
 }
 }
 
-/* FINALIZAR + WHATSAPP */
+/* FINALIZAR */
 async function finalizar(){
 
-await supabaseClient.from('agendamentos').insert([{
-usuario_id:user.id,
-servico_id:servicoSelecionado.id,
-data:agData.value,
-horario:horarioSelecionado
-}]);
+    if(!user){
+        alert('Faça login novamente.');
+        show('login');
+        return;
+    }
 
-window.open(
-`https://wa.me/5588999514333?text=Agendamento: ${user.nome} - ${servicoSelecionado.nome} - ${agData.value} ${horarioSelecionado}`,
-'_blank'
-);
+    const { error } = await supabaseClient
+        .from('agendamentos')
+        .insert([{
+            usuario_id: user.id,
+            servico_id: servicoSelecionado.id,
+            data: agData.value,
+            horario: horarioSelecionado,
+            observacao: document.getElementById('obs').value
+        }]);
 
-show('home');
+    if(error){
+        alert('Erro ao salvar agendamento.');
+        console.log(error);
+        return;
+    }
+
+    show('sucesso');
+
+    setTimeout(()=>{
+        show('home');
+    },3000);
+
 }
 
 /* ADMIN */
@@ -502,8 +562,11 @@ if(tab==='servicos'){
 
         <button class="secondary"
             onclick="addServico()">
-            Adicionar Serviço
-        </button>
+            Adicionar Serviço </button>
+<button class="secondary"
+    onclick="loadAdmin()">
+    Salvar
+</button>
 
     </div>
     `;
