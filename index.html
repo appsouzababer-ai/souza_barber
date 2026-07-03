@@ -134,8 +134,8 @@ p{line-height:1.6;margin:10px 0}
 <input id="loginSenha" type="password" placeholder="Senha">
 
 <button onclick="login()">Entrar</button>
-<button onclick="show('cadastro')">Criar Conta</button>
-<button onclick="show('recuperar')">Recuperar Senha</button>
+<button class="secondary" onclick="show('cadastro')">Criar Conta</button>
+<button class="secondary" onclick="show('recuperar')">Recuperar Senha</button>
 <button class="secondary" onclick="show('adminLogin')">Área da Barbearia </button>
 </div>
 
@@ -203,13 +203,27 @@ p{line-height:1.6;margin:10px 0}
 <!-- ADMIN -->
 <div id="admin" class="screen">
 
-<div class="tabs">
-<button onclick="tab='clientes';loadAdmin()">Clientes</button>
-<button onclick="tab='agendamentos';loadAdmin()">Agendamentos</button>
-<button onclick="tab='servicos';loadAdmin()">Serviços</button>
-</div>
+    <button class="topbtn secondary" onclick="show('login')">
+        ← Voltar
+    </button>
 
-<div id="adminContent"></div>
+    <h2>Área da Barbearia</h2>
+
+    <div class="tabs">
+        <button class="secondary" onclick="tab='clientes';loadAdmin()">
+            Clientes
+        </button>
+
+        <button class="secondary" onclick="tab='agendamentos';loadAdmin()">
+            Agendamentos
+        </button>
+
+        <button class="secondary" onclick="tab='servicos';loadAdmin()">
+            Serviços
+        </button>
+    </div>
+
+    <div id="adminContent"></div>
 
 </div>
 
@@ -357,10 +371,55 @@ show('home');
 
 /* ADMIN */
 async function loginAdmin(){
-if(admUser.value==='admin' && admPass.value==='123456'){
-show('admin');
-loadAdmin();
+    if(admUser.value==='admin' && admPass.value==='123456'){
+        show('admin');
+        loadAdmin();
+    }
+
 }
+
+async function editServico(id,field,value){
+
+    let obj = {};
+    obj[field] = value;
+
+    await supabaseClient
+        .from('servicos')
+        .update(obj)
+        .eq('id',id);
+
+}
+
+async function deleteServico(id){
+
+    await supabaseClient
+        .from('servicos')
+        .delete()
+        .eq('id',id);
+
+    loadAdmin();
+
+}
+
+async function addServico(){
+
+    const nome = document.getElementById('novoServicoNome').value;
+    const valor = document.getElementById('novoServicoValor').value;
+
+    if(!nome || !valor){
+        alert('Preencha todos os campos.');
+        return;
+    }
+
+    await supabaseClient
+        .from('servicos')
+        .insert([{
+            nome:nome,
+            valor:valor
+        }]);
+
+    loadAdmin();
+
 }
 
 async function loadAdmin(){
@@ -400,28 +459,58 @@ ${a.servicos.nome}<br>
 
 if(tab==='servicos'){
 
-const { data } = await supabaseClient.from('servicos').select('*');
+    const { data } = await supabaseClient
+        .from('servicos')
+        .select('*');
 
-data.forEach(s=>{
-html+=`
-<div class="card">
-<input value="${s.nome}" onchange="editServico(${s.id},'nome',this.value)">
-<input value="${s.valor}" onchange="editServico(${s.id},'valor',this.value)">
-</div>`;
-});
+    data.forEach(s=>{
+
+        html += `
+        <div class="card">
+
+            <input
+                value="${s.nome}"
+                onchange="editServico('${s.id}','nome',this.value)"
+            >
+
+            <input
+                value="${s.valor}"
+                onchange="editServico('${s.id}','valor',this.value)"
+            >
+
+            <button class="secondary"
+                onclick="deleteServico('${s.id}')">
+                Excluir
+            </button>
+
+        </div>
+        `;
+    });
+
+    html += `
+    <div class="card">
+
+        <input
+            id="novoServicoNome"
+            placeholder="Nome do serviço"
+        >
+
+        <input
+            id="novoServicoValor"
+            placeholder="Valor"
+        >
+
+        <button class="secondary"
+            onclick="addServico()">
+            Adicionar Serviço
+        </button>
+
+    </div>
+    `;
 }
 
-adminContent.innerHTML=html;
-}
+document.getElementById('adminContent').innerHTML = html;
 
-async function editServico(id,field,value){
-let obj={};
-obj[field]=value;
-
-await supabaseClient
-.from('servicos')
-.update(obj)
-.eq('id',id);
 }
 
 /* NAV */
