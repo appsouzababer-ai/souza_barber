@@ -1,0 +1,95 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, sans-serif;
+    background:#0b0b0b;
+    color:white;
+}
+
+.screen{
+    display:none;
+    max-width:600px;
+    margin:auto;
+    padding:20px;
+}
+
+.active{
+    display:block;
+}
+
+.logo{
+    width:150px;
+    display:block;
+    margin:20px auto;
+}
+
+input,
+textarea{
+    width:100%;
+    padding:14px;
+    margin:10px 0;
+    border:none;
+    border-radius:15px;
+    background:#1c1c1c;
+    color:white;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    margin-top:10px;
+    border:none;
+    border-radius:15px;
+    background:#D4AF37;
+    color:black;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+.card{
+    background:#171717;
+    padding:20px;
+    border-radius:15px;
+    margin:15px 0;
+}
+
+.slot{
+    display:inline-block;
+    padding:10px;
+    margin:5px;
+    border-radius:10px;
+    background:#1f1f1f;
+    cursor:pointer;
+}
+
+.selected{
+    background:#D4AF37;
+    color:black;
+}
+
+.indisponivel{
+    opacity:.4;
+    pointer-events:none;
+    text-decoration:line-through;
+}
+
+.topbtn{
+    width:auto;
+    padding:10px 15px;
+}
+
+.center{
+    text-align:center;
+}
+
+a{
+    color:#D4AF37;
+}
