@@ -1,1 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Souza Barbershop</title>
 
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#D4AF37">
+<link rel="apple-touch-icon" href="icon-192.png">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+const SUPABASE_URL='https://xtmbsjsvlsiqbhgtvwwi.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh0bWJzanN2bHNpcWJoZ3R2d3dpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwNzg0ODQsImV4cCI6MjA5ODY1NDQ4NH0.hHIS33Hdd-ZjI3co3Hsg-Ou_cFYlAtFR3ome1EablTQ';
+const supabaseClient = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('./sw.js');
+}
+</script>
+
+<style>
+body{font-family:Arial;background:#0b0b0b;color:#fff;margin:0}
+.screen{display:none;padding:20px;max-width:600px;margin:auto}
+.active{display:block}
+input,button,textarea{width:100%;padding:12px;margin:6px 0;border-radius:10px;border:none}
+button{background:#D4AF37;font-weight:bold;cursor:pointer}
+.card{background:#1c1c1c;padding:15px;margin:10px 0;border-radius:10px}
+.slot{display:inline-block;padding:10px;margin:5px;background:#222;border-radius:8px;cursor:pointer}
+.selected{background:#D4AF37;color:#000}
+.disabled{opacity:.3;pointer-events:none}
+.tabs button{width:33%}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div id="login" class="screen active">
+<h2>Login</h2>
+<input id="loginInstagram" placeholder="Instagram">
+<input id="loginSenha" type="password">
+<button onclick="login()">Entrar</button>
+</div>
+
+<!-- HOME -->
+<div id="home" class="screen">
+<button onclick="logout()">Sair</button>
+<h2>Agendar</h2>
+
+<button onclick="show('servicos')">Ver Serviços</button>
+
+</div>
+
+<!-- SERVIÇOS -->
+<div id="servicos" class="screen">
+<button onclick="show('home')">Voltar</button>
+<div id="listaServicos"></div>
+</div>
+
+<!-- DATA -->
+<div id="data" class="screen">
+<input type="date" id="agData" onchange="carregarHorarios()">
+<button onclick="show('horario')">Próximo</button>
+</div>
+
+<!-- HORARIO -->
+<div id="horario" class="screen">
+<div id="horarios"></div>
+<button onclick="finalizar()">Confirmar</button>
+</div>
+
+<!-- ADMIN -->
+<div id="adminLogin" class="screen">
+<h2>Admin</h2>
+<input id="admUser">
+<input id="admPass" type="password">
+<button onclick="loginAdmin()">Entrar</button>
+</div>
+
+<div id="admin" class="screen">
+
+<div class="tabs">
+<button onclick="tab='clientes';loadAdmin()">Clientes</button>
+<button onclick="tab='agendamentos';loadAdmin()">Agendamentos</button>
+<button onclick="tab='servicos';loadAdmin()">Serviços</button>
+</div>
+
+<div id="adminContent"></div>
+
+</div>
+
+<script>
+
+let user=null;
+let servicoSelecionado=null;
+let horarioSelecionado=null;
+let tab='clientes';
+
+/* LOGIN */
+async function login(){
+
+const { data } = await supabaseClient
+.from('usuarios')
+.select('*')
+.eq('instagram',loginInstagram.value)
+.eq('senha',loginSenha.value)
+.single();
+
+if(!data){alert('erro');return;}
+
+user=data;
+show('home');
+}
+
+/* SERVIÇOS */
+async function loadServicos(){
+
+const { data } = await supabaseClient
+.from('servicos')
+.select('*');
+
+let html='';
+
+data.forEach(s=>{
+html+=`
+<div class="card" onclick="selectServico(${s.id},'${s.nome}',${s.valor})">
+${s.nome} - R$${s.valor}
+</div>`;
+});
+
+listaServicos.innerHTML=html;
+}
+
+function selectServico(id,nome,valor){
+servicoSelecionado={id,nome,valor};
+show('data');
+}
+
+/* HORÁRIOS + BLOQUEIO DIA LOTADO */
+async function carregarHorarios(){
+
+const fixos=[
+'08:00','08:50','09:40','10:30','11:20',
+'14:00','14:50','15:40','16:30','17:20','18:10'
+];
+
+const { data } = await supabaseClient
+.from('agendamentos')
+.select('horario')
+.eq('data',agData.value);
+
+let ocupados=(data||[]).map(x=>x.horario);
+
+horarios.innerHTML='';
+
+fixos.forEach(h=>{
+
+let d=document.createElement('div');
+d.className='slot';
+d.innerText=h;
+
+if(ocupados.includes(h)){
+d.classList.add('disabled');
+}else{
+d.onclick=()=>{
+horarioSelecionado=h;
+document.querySelectorAll('.slot').forEach(x=>x.classList.remove('selected'));
+d.classList.add('selected');
+};
+}
+
+horarios.appendChild(d);
+
+});
+
+/* BLOQUEIO DIA COMPLETO */
+if(ocupados.length>=fixos.length){
+alert("Dia completo!");
+show('servicos');
+}
+
+}
+
+/* FINALIZAR + WHATSAPP */
+async function finalizar(){
+
+await supabaseClient
+.from('agendamentos')
+.insert([{
+usuario_id:user.id,
+servico_id:servicoSelecionado.id,
+data:agData.value,
+horario:horarioSelecionado
+}]);
+
+/* WHATSAPP AUTOMÁTICO */
+window.open(
+`https://wa.me/5588999514333?text=Agendamento confirmado: ${user.nome} - ${servicoSelecionado.nome} - ${agData.value} ${horarioSelecionado}`,
+'_blank'
+);
+
+show('home');
+}
+
+/* ADMIN */
+async function loginAdmin(){
+if(admUser.value==='admin' && admPass.value==='123456'){
+show('admin');
+loadAdmin();
+}
+}
+
+async function loadAdmin(){
+
+let html='';
+
+if(tab==='clientes'){
+
+const { data } = await supabaseClient.from('usuarios').select('*');
+
+data.forEach(u=>{
+html+=`
+<div class="card">
+<b>${u.nome}</b><br>
+📞 <a href="https://wa.me/${u.whats}">${u.whats}</a><br>
+📷 @${u.instagram}
+</div>`;
+});
+}
+
+if(tab==='servicos'){
+
+const { data } = await supabaseClient.from('servicos').select('*');
+
+data.forEach(s=>{
+html+=`
+<div class="card">
+<input value="${s.nome}" onchange="updateServico(${s.id},this.value,'nome')">
+<input value="${s.valor}" onchange="updateServico(${s.id},this.value,'valor')">
+</div>`;
+});
+}
+
+if(tab==='agendamentos'){
+
+const { data } = await supabaseClient
+.from('agendamentos')
+.select(`*,usuarios(nome,whats),servicos(nome)`);
+
+data.forEach(a=>{
+html+=`
+<div class="card">
+<b>${a.usuarios.nome}</b><br>
+${a.servicos.nome}<br>
+📅 ${a.data} ${a.horario}
+</div>`;
+});
+}
+
+adminContent.innerHTML=html;
+
+}
+
+/* EDITAR SERVIÇOS */
+async function updateServico(id,value,field){
+
+let obj={};
+obj[field]=value;
+
+await supabaseClient
+.from('servicos')
+.update(obj)
+.eq('id',id);
+
+}
+
+/* NAV */
+function show(id){
+document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+document.getElementById(id).classList.add('active');
+}
+
+</script>
+
+</body>
+</html>
