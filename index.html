@@ -22,9 +22,15 @@ const supabaseClient = supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0b0b0b,#171717);color:#fff;min-height:100vh}
+body{font-family:'Inter',sans-serif;
+background:linear-gradient(135deg,#0b0b0b,#171717);
+color:#fff;min-height:100vh}
 
-.screen{display:none;padding:24px;max-width:560px;margin:auto;animation:fade .35s ease}
+.screen{display:none;
+padding:24px;
+max-width:560px;
+margin:auto;
+animation:fade .35s ease}
 .active{display:block}
 
 @keyframes fade{
@@ -32,7 +38,11 @@ from{opacity:0;transform:translateY(10px)}
 to{opacity:1;transform:none}
 }
 
-.logo{display:block;margin:20px auto;width:150px;border-radius:50%;box-shadow:0 10px 30px rgba(212,175,55,.25)}
+.logo{display:block;
+margin:20px auto;
+width:150px;
+border-radius:50%;
+box-shadow:0 10px 30px rgba(212,175,55,.25)}
 
 input,textarea{
 width:100%;
@@ -62,6 +72,21 @@ button:hover{transform:translateY(-2px)}
 button:active{transform:scale(.98)}
 
 .secondary{background:transparent;box-shadow:none;color:#d8d8d8}
+
+#login .secondary{
+    display:block;
+    text-align:center;
+    margin:14px auto;
+    border:none;
+    padding:4px;
+    font-weight:500;
+    width:auto;
+}
+
+#login .secondary:hover{
+    color:#D4AF37;
+    transform:none;
+}
 
 .card{
 background:rgba(255,255,255,.06);
@@ -111,6 +136,7 @@ p{line-height:1.6;margin:10px 0}
 <button onclick="login()">Entrar</button>
 <button onclick="show('cadastro')">Criar Conta</button>
 <button onclick="show('recuperar')">Recuperar Senha</button>
+<button class="secondary" onclick="show('adminLogin')">Área da Barbearia </button>
 </div>
 
 <!-- CADASTRO -->
@@ -248,17 +274,22 @@ let html='';
 
 data.forEach(s=>{
 html+=`
-<div class="card" onclick="selectServico(${s.id},'${s.nome}',${s.valor})">
+<div class="card" onclick="selectServico('${s.id}','${s.nome}',${s.valor})">
 ${s.nome} - R$${s.valor}
 </div>`;
 });
 
-listaServicos.innerHTML=html;
+document.getElementById('listaServicos').innerHTML = html;
 }
 
 function selectServico(id,nome,valor){
-servicoSelecionado={id,nome,valor};
-show('data');
+    servicoSelecionado={
+        id:id,
+        nome:nome,
+        valor:valor
+    };
+
+    show('data');
 }
 
 /* HORÁRIOS + BLOQUEIO */
